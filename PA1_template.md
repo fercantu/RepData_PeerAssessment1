@@ -1,9 +1,7 @@
 # Reproducible Research: Peer Assessment 1
 
 This is peer assessment #1 for the Coursera class Reproducible Research.
-```{r setoption, echo = FALSE}
-opts_chunk$set(echo = TRUE, results = "show")
-```
+
 
 ## Loading and preprocessing the data
 
@@ -11,7 +9,8 @@ opts_chunk$set(echo = TRUE, results = "show")
 
 This first step is to download the data from the working folder (which is a clone from the GitHub repo) and unzip it. This is done by downloading the zipped file into a temporary file and then unzipping it with the *unz* command.
 
-```{r load data}
+
+```r
 data <- read.csv(unz("activity.zip", "activity.csv"))
 ```
 
@@ -19,13 +18,15 @@ data <- read.csv(unz("activity.zip", "activity.csv"))
 
 The variables "steps" and "intervals" are already in the correct format (i.e., integers). However, the variable "date" was read as factor and needs to be converted to date format.
 
-```{r correct data format}
+
+```r
 data$date <- as.Date(data$date, format = "%Y-%m-%d")
 ```
 
 Also, it will be useful to prepare a "clean" dataset without missing values, as well as the number of steps per day (of the dataset without NA.
 
-```{r create clean dataset}
+
+```r
 dataclean <- data[!is.na(data[,1]),]
 stepsday <- as.matrix(xtabs(steps ~ date, dataclean))
 ```
@@ -35,44 +36,53 @@ stepsday <- as.matrix(xtabs(steps ~ date, dataclean))
 **For this part of the assignment, you can ignore missing values in the dataset.  
 (1) Make a histogram of the total number of steps taken each day**
 
-```{r histogram, fig.height = 6}
+
+```r
 hist(stepsday, main= "Histogram of the total number of steps per day")
 ```
 
+![plot of chunk histogram](figure/histogram.png) 
+
 **(2) Calculate and report the mean and median total number of steps taken per day.**
 
-```{r average per day}
+
+```r
 averageday <- mean(stepsday)
 medianday <- median(stepsday)
 ```
-The average number of steps taken per day is **`r averageday`** and the median number of steps per day is **`r medianday`**.
+The average number of steps taken per day is **1.0766 &times; 10<sup>4</sup>** and the median number of steps per day is **1.0765 &times; 10<sup>4</sup>**.
 
 ## What is the average daily activity pattern?
 
 **(1) Make a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all days (y-axis)**
 
-```{r patterns, fig.height = 6}
+
+```r
 pattern <- as.matrix(with(dataclean, tapply(steps, interval, mean)))
 plot(rownames(pattern), pattern, type="l", xlab="Interval", ylab="Steps", main="Daily step pattern (average across recorded days)")
 ```
 
+![plot of chunk patterns](figure/patterns.png) 
+
 **(2) Which 5-minute interval, on average across all the days in the dataset, contains the maximum number of steps?**
 
-```{r maximum interval}
+
+```r
 maximum <- rownames(pattern)[which.max(pattern)]
 ```
 
-The 5-minute interval with the highest number of steps is the interval "**`r maximum`**" with `r max(pattern)` steps (on average).
+The 5-minute interval with the highest number of steps is the interval "**835**" with 206.1698 steps (on average).
 
 ## Imputing missing values
 
 **(1) Calculate and report the total number of missing values in the dataset (i.e. the total number of rows with NAs).**
 
-```{r}
+
+```r
 missing <- sum(is.na(data$steps))
 ```
 
-There are a total of **`r missing`** missing values in the dataset.
+There are a total of **2304** missing values in the dataset.
 
 **(2) Devise a strategy for filling in all of the missing values in the dataset. The strategy does not need to be sophisticated. For example, you could use the mean/median for that day, or the mean for that 5-minute interval, etc.**
 
@@ -82,7 +92,8 @@ I choose the strategy to impute the missing values for the average number of ste
 
 This new dataset will be called *imputedata* and it is obtained as follows.
 
-```{r imputation, cache = TRUE}
+
+```r
 imputedata <- data
 for (i in 1:dim(imputedata)[1]) {
     if (is.na(imputedata$steps[i])) {
@@ -92,12 +103,18 @@ for (i in 1:dim(imputedata)[1]) {
 ```
 **(4) Make a histogram of the total number of steps taken each day and calculate and report the mean and median total number of steps taken per day. Do these values differ from the estimates from the first part of the assignment? What is the impact of imputing missing data on the estimates of the total daily number of steps?**
 
-```{r analysis imputed data, fig.height = 6, fig.width=12}
+
+```r
 stepsdayi <- as.matrix(xtabs(steps ~ date, imputedata))
 par(mfrow=c(1,2))
 hist(stepsday, ylim=c(0,35), main="Data with NAs deleted")
 hist(stepsdayi, ylim=c(0,35), main="Data with NAs imputed")
 mtext("Histogram of the total number of steps per day", side=3, outer=TRUE, line=-1)
+```
+
+![plot of chunk analysis imputed data](figure/analysis imputed data.png) 
+
+```r
 averagedayi <- mean(stepsdayi)
 mediandayi <- median(stepsdayi)
 ```
@@ -108,8 +125,8 @@ To confirm this finding, the following table compares the mean and the median ob
 
 . | NAs deleted | NAs imputed
 ---|---|---
-**Mean** |`r averageday`      |  `r averagedayi`
-**Median**  |  `r medianday`      | `r mediandayi`
+**Mean** |1.0766 &times; 10<sup>4</sup>      |  1.0766 &times; 10<sup>4</sup>
+**Median**  |  1.0765 &times; 10<sup>4</sup>      | 1.0766 &times; 10<sup>4</sup>
 
 The mean is exactly the same for the two methods (in fact, it can be shown that imputing with the mean is equivalent to listwise delete). For the median, the two methods produce slightly different results, but the difference is negligible.
 
@@ -121,7 +138,8 @@ The mean is exactly the same for the two methods (in fact, it can be shown that 
 
 The new variable is called *week.of.day* as is concatenated with the imputed dataset.
 
-```{r weekday/weekend}
+
+```r
 imputedata$date <- as.Date(imputedata$date, format = "%Y-%m-%d")
 week.of.day <- weekdays(imputedata$date) == "Saturday" | weekdays(imputedata$date) == "Sunday"
 week.of.day <- as.factor(week.of.day)
@@ -131,7 +149,8 @@ imputedata2 <- cbind(imputedata, week.of.day)
 
 **(2) Make a panel plot containing a time series plot (i.e. type = "l") of the 5-minute interval (x-axis) and the average number of steps taken, averaged across all weekday days or weekend days (y-axis)**
 
-```{r patterns pt 2, fig.height = 6, fig.width=12}
+
+```r
 patternwkday <- as.matrix(with(imputedata2[imputedata2$week.of.day=="Weekday",], tapply(steps, interval, mean)))
 patternwkend <- as.matrix(with(imputedata2[imputedata2$week.of.day=="Weekend",], tapply(steps, interval, mean)))
 par(mfrow = c(1,2))
@@ -139,5 +158,7 @@ plot(rownames(patternwkday), patternwkday, type="l", xlab="Interval", ylab="Step
 plot(rownames(patternwkend), patternwkend, type="l", xlab="Interval", ylab="Steps", main="Weekend", ylim=c(0,250))
 mtext("Daily step pattern (average across recorded days)", side=3, outer=TRUE, line=-1)
 ```
+
+![plot of chunk patterns pt 2](figure/patterns pt 2.png) 
 
 ## The end
